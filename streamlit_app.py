@@ -14,22 +14,24 @@ if "logged_in" not in st.session_state:
     st.session_state.username = None
     st.session_state.role = None
 
-# --- CALLBACK LOGIN ---
-def do_login():
-    username = st.session_state.login_username
-    password = st.session_state.login_password
-    if username in users and users[username]["password"] == password:
-        st.session_state.logged_in = True
-        st.session_state.username = username
-        st.session_state.role = users[username]["role"]
-    else:
-        st.error("❌ Invalid username or password")
-
 # --- LOGIN PAGE ---
 def login_page():
     st.title("🔑 Login")
-    st.text_input("Username", key="login_username", on_change=do_login)
-    st.text_input("Password", type="password", key="login_password", on_change=do_login)
+
+    # --- FORM ---
+    with st.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Login")
+
+        if submitted:
+            if username in users and users[username]["password"] == password:
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.role = users[username]["role"]
+                st.experimental_rerun()  # od razu przeładuj aplikację
+            else:
+                st.error("❌ Invalid username or password")
 
 # --- ADMIN PAGES ---
 def admin_dashboard():
@@ -56,6 +58,7 @@ def app_pages():
 
     st.sidebar.success(f"Logged in as {username} ({role})")
 
+    # Menu zależne od roli
     if role == "admin":
         menu = ["Home", "Admin Dashboard", "Manage Users"]
     else:
@@ -63,12 +66,14 @@ def app_pages():
 
     choice = st.sidebar.radio("Navigation", menu)
 
+    # Logout
     if st.sidebar.button("🚪 Logout"):
         st.session_state.logged_in = False
         st.session_state.username = None
         st.session_state.role = None
         st.experimental_rerun()
 
+    # Routing
     if choice == "Home":
         if role == "user":
             user_home()
