@@ -1,18 +1,25 @@
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 
-# --- USERS from secrets ---
-users = {}
-for user_key, user_data in st.secrets["users"].items():
-    users[user_data["username"]] = {
-        "password": user_data["password"],
-        "role": user_data["role"]
-    }
+# --- USERS (demo; w prawdziwej aplikacji lepiej z secrets/DB) ---
+users = {
+    "alice": {"password": "123", "role": "admin"},
+    "bob": {"password": "abc", "role": "admin"},
+    "charlie": {"password": "xyz", "role": "user"}
+}
 
 # --- INIT SESSION STATE ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = None
     st.session_state.role = None
+    st.session_state.login_submitted = False
+
+# --- AUTO REFRESH WHEN LOGIN ---
+if st.session_state.logged_in and st.session_state.login_submitted:
+    # przebuduj tylko raz po zalogowaniu, żeby od razu przejść do strony właściwej
+    st_autorefresh(interval=500, limit=1, key="refresh_once")
+    st.session_state.login_submitted = False
 
 # --- LOGIN PAGE ---
 def login_page():
@@ -25,7 +32,7 @@ def login_page():
             st.session_state.logged_in = True
             st.session_state.username = username
             st.session_state.role = users[username]["role"]
-            st.success(f"✅ Logged in as {username}")  # informacja o sukcesie
+            st.session_state.login_submitted = True
         else:
             st.error("❌ Invalid username or password")
 
@@ -54,13 +61,16 @@ def app_pages():
 
     st.sidebar.success(f"Logged in as {username} ({role})")
 
+    # Menu zależne od roli
     menu = ["Home", "Admin Dashboard", "Manage Users"] if role == "admin" else ["Home", "Payments"]
     choice = st.sidebar.radio("Navigation", menu)
 
+    # Logout
     if st.sidebar.button("🚪 Logout"):
         st.session_state.logged_in = False
         st.session_state.username = None
         st.session_state.role = None
+        st.session_state.login_submitted = False
 
     # Routing
     if choice == "Home":
