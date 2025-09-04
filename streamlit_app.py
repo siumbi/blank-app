@@ -13,23 +13,28 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = None
     st.session_state.role = None
+    st.session_state.login_submitted = False  # nowa flaga
 
 # --- LOGIN PAGE ---
 def login_page():
     st.title("🔑 Login")
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Login")
-        if submitted:
-            if username in users and users[username]["password"] == password:
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.session_state.role = users[username]["role"]
-                # od razu przeładuj aplikację
+
+    if not st.session_state.login_submitted:
+        with st.form("login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Login")
+
+            if submitted:
+                st.session_state.login_submitted = True
+                if username in users and users[username]["password"] == password:
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    st.session_state.role = users[username]["role"]
+                else:
+                    st.error("❌ Invalid username or password")
+                    st.session_state.login_submitted = False
                 st.experimental_rerun()
-            else:
-                st.error("❌ Invalid username or password")
 
 # --- ADMIN PAGES ---
 def admin_dashboard():
@@ -56,7 +61,6 @@ def app_pages():
 
     st.sidebar.success(f"Logged in as {username} ({role})")
 
-    # Navigation options depend on role
     if role == "admin":
         menu = ["Home", "Admin Dashboard", "Manage Users"]
     else:
@@ -68,6 +72,7 @@ def app_pages():
         st.session_state.logged_in = False
         st.session_state.username = None
         st.session_state.role = None
+        st.session_state.login_submitted = False
         st.experimental_rerun()
 
     # ROUTING
