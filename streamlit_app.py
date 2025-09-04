@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_autorefresh import st_autorefresh
 
 # --- USERS (demo; w prawdziwej aplikacji lepiej z secrets/DB) ---
 users = {
@@ -11,28 +10,28 @@ users = {
 # --- INIT SESSION STATE ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
-    st.session_state.username = None
-    st.session_state.role = None
-    st.session_state.login_submitted = False
-
-# --- AUTO REFRESH WHEN LOGIN ---
-if st.session_state.logged_in and st.session_state.login_submitted:
-    # przebuduj tylko raz po zalogowaniu, żeby od razu przejść do strony właściwej
-    st_autorefresh(interval=500, limit=1, key="refresh_once")
-    st.session_state.login_submitted = False
+    st.session_state.username = ""
+    st.session_state.role = ""
+    st.session_state.login_attempted = False  # flaga do komunikatu o logowaniu
 
 # --- LOGIN PAGE ---
 def login_page():
     st.title("🔑 Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-
+    username = st.text_input("Username", key="login_username")
+    password = st.text_input("Password", type="password", key="login_password")
+    
     if st.button("Login"):
+        st.session_state.login_attempted = True
         if username in users and users[username]["password"] == password:
             st.session_state.logged_in = True
             st.session_state.username = username
             st.session_state.role = users[username]["role"]
-            st.session_state.login_submitted = True
+        else:
+            st.session_state.logged_in = False
+
+    if st.session_state.login_attempted:
+        if st.session_state.logged_in:
+            st.success(f"✅ Logged in as {st.session_state.username}")
         else:
             st.error("❌ Invalid username or password")
 
@@ -56,21 +55,20 @@ def payments():
 
 # --- MAIN APP WITH NAVIGATION ---
 def app_pages():
-    role = st.session_state.role
     username = st.session_state.username
+    role = st.session_state.role
 
     st.sidebar.success(f"Logged in as {username} ({role})")
-
-    # Menu zależne od roli
+    
     menu = ["Home", "Admin Dashboard", "Manage Users"] if role == "admin" else ["Home", "Payments"]
     choice = st.sidebar.radio("Navigation", menu)
 
     # Logout
     if st.sidebar.button("🚪 Logout"):
         st.session_state.logged_in = False
-        st.session_state.username = None
-        st.session_state.role = None
-        st.session_state.login_submitted = False
+        st.session_state.username = ""
+        st.session_state.role = ""
+        st.session_state.login_attempted = False
 
     # Routing
     if choice == "Home":
