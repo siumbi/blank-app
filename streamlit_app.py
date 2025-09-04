@@ -14,20 +14,22 @@ if "logged_in" not in st.session_state:
     st.session_state.username = None
     st.session_state.role = None
 
-# --- LOGIN PAGE ---
+# --- LOGIN PAGE using st.form ---
 def login_page():
     st.title("🔑 Login")
 
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    with st.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Login")
 
-    if st.button("Login"):
-        if username in users and users[username]["password"] == password:
-            st.session_state.logged_in = True
-            st.session_state.username = username
-            st.session_state.role = users[username]["role"]
-        else:
-            st.error("❌ Invalid username or password")
+        if submitted:
+            if username in users and users[username]["password"] == password:
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.role = users[username]["role"]
+            else:
+                st.error("❌ Invalid username or password")
 
 # --- ADMIN PAGES ---
 def admin_dashboard():
@@ -82,6 +84,6 @@ def app_pages():
 
 # --- ROUTER ---
 if st.session_state.logged_in:
-    app_pages()  # od razu pokazuje dashboard / user home
+    app_pages()  # pokazuje dashboard / user home od razu
 else:
     login_page()  # ekran logowania
