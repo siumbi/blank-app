@@ -13,28 +13,23 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = None
     st.session_state.role = None
-    st.session_state.login_submitted = False  # nowa flaga
+
+# --- CALLBACK LOGIN ---
+def do_login():
+    username = st.session_state.login_username
+    password = st.session_state.login_password
+    if username in users and users[username]["password"] == password:
+        st.session_state.logged_in = True
+        st.session_state.username = username
+        st.session_state.role = users[username]["role"]
+    else:
+        st.error("❌ Invalid username or password")
 
 # --- LOGIN PAGE ---
 def login_page():
     st.title("🔑 Login")
-
-    if not st.session_state.login_submitted:
-        with st.form("login_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Login")
-
-            if submitted:
-                st.session_state.login_submitted = True
-                if username in users and users[username]["password"] == password:
-                    st.session_state.logged_in = True
-                    st.session_state.username = username
-                    st.session_state.role = users[username]["role"]
-                else:
-                    st.error("❌ Invalid username or password")
-                    st.session_state.login_submitted = False
-                st.experimental_rerun()
+    st.text_input("Username", key="login_username", on_change=do_login)
+    st.text_input("Password", type="password", key="login_password", on_change=do_login)
 
 # --- ADMIN PAGES ---
 def admin_dashboard():
@@ -72,10 +67,8 @@ def app_pages():
         st.session_state.logged_in = False
         st.session_state.username = None
         st.session_state.role = None
-        st.session_state.login_submitted = False
         st.experimental_rerun()
 
-    # ROUTING
     if choice == "Home":
         if role == "user":
             user_home()
