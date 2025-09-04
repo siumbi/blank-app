@@ -13,7 +13,6 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = None
     st.session_state.role = None
-    st.session_state.page = "login"
 
 # --- LOGIN PAGE ---
 def login_page():
@@ -27,8 +26,6 @@ def login_page():
             st.session_state.logged_in = True
             st.session_state.username = username
             st.session_state.role = users[username]["role"]
-            st.session_state.page = "home"
-            st.experimental_rerun()
         else:
             st.error("❌ Invalid username or password")
 
@@ -69,8 +66,6 @@ def app_pages():
         st.session_state.logged_in = False
         st.session_state.username = None
         st.session_state.role = None
-        st.session_state.page = "login"
-        st.experimental_rerun()
 
     # ROUTING
     if choice == "Home":
@@ -86,11 +81,7 @@ def app_pages():
         payments()
 
 # --- ROUTER ---
-if st.session_state.page == "login":
-    login_page()
+if st.session_state.logged_in:
+    app_pages()  # od razu pokazuje dashboard / user home
 else:
-    if st.session_state.logged_in:
-        app_pages()
-    else:
-        st.session_state.page = "login"
-        st.experimental_rerun()
+    login_page()  # ekran logowania
