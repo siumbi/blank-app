@@ -1,20 +1,12 @@
 import streamlit as st
 
 # --- USERS from secrets ---
-users = {
-    st.secrets["users"]["alice_username"]: {
-        "password": st.secrets["users"]["alice_password"],
-        "role": st.secrets["users"]["alice_role"]
-    },
-    st.secrets["users"]["bob_username"]: {
-        "password": st.secrets["users"]["bob_password"],
-        "role": st.secrets["users"]["bob_role"]
-    },
-    st.secrets["users"]["charlie_username"]: {
-        "password": st.secrets["users"]["charlie_password"],
-        "role": st.secrets["users"]["charlie_role"]
+users = {}
+for user_key, user_data in st.secrets["users"].items():
+    users[user_data["username"]] = {
+        "password": user_data["password"],
+        "role": user_data["role"]
     }
-}
 
 # --- INIT SESSION STATE ---
 if "logged_in" not in st.session_state:
@@ -40,4 +32,13 @@ def login_page():
         else:
             st.error("❌ Invalid username or password")
 
-# --- reszta Twojego kodu pozostaje bez zmian ---
+# --- reszta Twojego kodu (app_pages, routing) pozostaje bez zmian ---
+
+if st.session_state.page == "login":
+    login_page()
+else:
+    if st.session_state.logged_in:
+        app_pages()
+    else:
+        st.session_state.page = "login"
+        st.experimental_rerun()
