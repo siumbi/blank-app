@@ -18,16 +18,21 @@ if "logged_in" not in st.session_state:
 def login_page():
     st.title("🔑 Login")
 
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    
-    if st.button("Login"):
-        if username in users and users[username]["password"] == password:
-            st.session_state.logged_in = True
-            st.session_state.username = username
-            st.session_state.role = users[username]["role"]
-        else:
-            st.error("❌ Invalid username or password")
+    with st.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Login")
+
+        if submitted:
+            if username in users and users[username]["password"] == password:
+                # ustawiamy stan sesji
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.role = users[username]["role"]
+                # od razu przebudowujemy aplikację
+                st.experimental_rerun()
+            else:
+                st.error("❌ Invalid username or password")
 
 # --- ADMIN PAGES ---
 def admin_dashboard():
@@ -54,7 +59,6 @@ def app_pages():
 
     st.sidebar.success(f"Logged in as {username} ({role})")
 
-    # Menu zależne od roli
     if role == "admin":
         menu = ["Home", "Admin Dashboard", "Manage Users"]
     else:
@@ -67,6 +71,7 @@ def app_pages():
         st.session_state.logged_in = False
         st.session_state.username = None
         st.session_state.role = None
+        st.experimental_rerun()
 
     # Routing
     if choice == "Home":
