@@ -1,12 +1,14 @@
 import streamlit as st
 import pandas as pd
 import pyodbc
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 # --- SESSION STATE INIT ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = None
     st.session_state.role = None
+    st.session_state.page = "Login"
 
 # --- DB CONNECTION ---
 def get_connection():
@@ -25,22 +27,27 @@ def get_connection():
 def get_table_names():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'")
+    cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'")
     tables = [row[0] for row in cursor.fetchall()]
     conn.close()
     return tables
 
 def load_table(table_name):
     conn = get_connection()
-    query = f"SELECT TOP 50 * FROM {table_name}"
+    query = f"SELECT TOP 200 * FROM {table_name}"  # zwiększona liczba wierszy
     df = pd.read_sql(query, conn)
     conn.close()
     return df
 
+def show_table(df):
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_default_column(sortable=True, filter=True, resizable=True)
+    grid_options = gb.build()
+    AgGrid(df, gridOptions=grid_options, height=600, fit_columns_on_grid_load=True)
+
 # --- LOGIN PAGE ---
 def login_page():
     st.title("🔑 Login")
-
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
@@ -50,18 +57,19 @@ def login_page():
             st.session_state.logged_in = True
             st.session_state.username = username
             st.session_state.role = users[username]["role"]
-            st.success("✅ Login successful!")
+            st.session_state.page = "Home"
             st.rerun()
         else:
             st.error("❌ Invalid username or password")
 
-# --- MAIN APP ---
-def main_app():
+# --- PAGE 1: SQL TABLE VIEWER ---
+def page_home():
     st.sidebar.success(f"Logged in as {st.session_state.username} ({st.session_state.role})")
     if st.sidebar.button("🚪 Logout"):
         st.session_state.logged_in = False
         st.session_state.username = None
         st.session_state.role = None
+        st.session_state.page = "Login"
         st.rerun()
 
     st.title("📊 Azure SQL Data Viewer")
@@ -72,12 +80,24 @@ def main_app():
 
         if st.button("Load Table"):
             df = load_table(table_name)
-            st.dataframe(df, use_container_width=True)
+            show_table(df)
     except Exception as e:
         st.error(f"Error: {e}")
+
+# --- PAGE 2: BUTTONS PAGE ---
+def page_buttons():
+    st.title("⚡ Buttons Page")
+    if st.button("Button 1"):
+        st.success("You clicked Button 1!")
+    if st.button("Button 2"):
+        st.info("You clicked Button 2!")
 
 # --- ROUTER ---
 if not st.session_state.logged_in:
     login_page()
 else:
-    main_app()
+    page = st.sidebar.radio("Navigation", ["Home", "Buttons Page"])
+    if page == "Home":
+        page_home()
+    elif page == "Buttons Page":
+        page_buttons()
