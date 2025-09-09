@@ -2,13 +2,13 @@ import streamlit as st
 import pandas as pd
 import pyodbc
 
-# --- SESSION STATE INIT ---
+# sesja
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = None
     st.session_state.role = None
 
-# --- DB CONNECTION ---
+# laczenie z baza danych (dane w secrets)
 def get_connection():
     conn = pyodbc.connect(
         f"DRIVER={{ODBC Driver 17 for SQL Server}};"
@@ -21,7 +21,6 @@ def get_connection():
     )
     return conn
 
-# --- HELPERS ---
 def get_table_names():
     conn = get_connection()
     cursor = conn.cursor()
@@ -32,39 +31,39 @@ def get_table_names():
 
 def load_table(table_name):
     conn = get_connection()
-    query = f"SELECT TOP 50 * FROM {table_name}"
+    query = f"SELECT TOP 15 * FROM {table_name}"
     df = pd.read_sql(query, conn)
     conn.close()
     return df
 
 # --- LOGIN PAGE ---
 def login_page():
-    st.title("🔑 Login")
+    st.title("🔑 Logowanie")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
-    if st.button("Login"):
+    if st.button("Zaloguj"):
         users = st.secrets["users"]
         if username in users and users[username]["password"] == password:
             st.session_state.logged_in = True
             st.session_state.username = username
             st.session_state.role = users[username]["role"]
-            st.success("✅ Login successful!")
+            st.success("✅ Logowanie udane !")
             st.rerun()
         else:
-            st.error("❌ Invalid username or password")
+            st.error("❌ Login lub chasło nie właściwe")
 
 # --- MAIN APP ---
 def main_app():
-    st.sidebar.success(f"Logged in as {st.session_state.username} ({st.session_state.role})")
-    if st.sidebar.button("🚪 Logout"):
+    st.sidebar.success(f"Zalogowany jako {st.session_state.username} ({st.session_state.role})")
+    if st.sidebar.button("🚪 Wyloguj"):
         st.session_state.logged_in = False
         st.session_state.username = None
         st.session_state.role = None
         st.experimental_rerun()
 
-    st.title("📊 Azure SQL Data Viewer")
+    st.title("📊  SQL Data ")
 
     try:
         tables = get_table_names()
