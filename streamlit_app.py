@@ -86,7 +86,7 @@ def page_home():
             gb.configure_default_column(sortable=True, filter=True, resizable=True)
             gb.configure_grid_options(domLayout='normal')  # pozwala na poziomy scroll
             grid_options = gb.build()
-            AgGrid(df, gridOptions=grid_options, height=600, fit_columns_on_grid_load=False)
+            AgGrid(df, gridOptions=grid_options, height=300, fit_columns_on_grid_load=False)
     except Exception as e:
         st.error(f"Error: {e}")
 
