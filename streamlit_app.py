@@ -62,19 +62,22 @@ def main_app():
         st.session_state.logged_in = False
         st.session_state.username = None
         st.session_state.role = None
-        st.rerun()
+        st.experimental_rerun()
 
     st.title("📊 Azure SQL Data Viewer")
 
     try:
         tables = get_table_names()
-        table_name = st.text_input("Wpisz nazwę tabeli", "member")
+        table_name = st.selectbox("Wybierz tabelę", tables)
 
-        if st.button("Load Table"):
-            df = load_table(table_name)
-            st.dataframe(df, use_container_width=True)
+        if table_name:
+            with st.spinner("Ładowanie danych..."):
+                df = load_table(table_name)
+                st.dataframe(df, use_container_width=True)
+
     except Exception as e:
         st.error(f"Error: {e}")
+
 
 # --- ROUTER ---
 if not st.session_state.logged_in:
