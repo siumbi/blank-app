@@ -1,90 +1,76 @@
 import streamlit as st
+import pyodbc
+import pandas as pd
 
-# --- USERS (demo; w prawdziwej aplikacji lepiej z secrets/DB) ---
-users = {
-    "alice": {"password": "123", "role": "admin"},
-    "bob": {"password": "abc", "role": "admin"},
-    "charlie": {"password": "xyz", "role": "user"}
-}
-
-# --- INIT SESSION STATE ---
+# --- SESSION STATE INIT ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
-    st.session_state.username = ""
-    st.session_state.role = ""
-    st.session_state.login_attempted = False  # flaga do komunikatu o logowaniu
+    st.session_state.username = None
+    st.session_state.role = None
+
+
+# --- DB CONNECTION ---
+def get_connection():
+    conn = pyodbc.connect(
+        f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+        f"SERVER={st.secrets['db_server']};"
+        f"DATABASE={st.secrets['db_name']};"
+        f"UID={st.secrets['db_user']};"
+        f"PWD={st.secrets['db_password']}"
+    )
+    return conn
+
+
+def load_table(table_name: str):
+    conn = get_connection()
+    query = f"SELECT TOP 50 * FROM {table_name};"
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
+
 
 # --- LOGIN PAGE ---
 def login_page():
     st.title("🔑 Login")
-    username = st.text_input("Username", key="login_username")
-    password = st.text_input("Password", type="password", key="login_password")
-    
+
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
     if st.button("Login"):
-        st.session_state.login_attempted = True
+        users = st.secrets["users"]  # load users from secrets.toml
         if username in users and users[username]["password"] == password:
             st.session_state.logged_in = True
             st.session_state.username = username
             st.session_state.role = users[username]["role"]
-        else:
-            st.session_state.logged_in = False
-
-    if st.session_state.login_attempted:
-        if st.session_state.logged_in:
-            st.success(f"✅ Logged in as {st.session_state.username}")
+            st.success("✅ Login successful!")
+            st.rerun()
         else:
             st.error("❌ Invalid username or password")
 
-# --- ADMIN PAGES ---
-def admin_dashboard():
-    st.title("📊 Admin Dashboard")
-    st.write("Full access to reports and management tools.")
 
-def manage_users():
-    st.title("👥 Manage Users")
-    st.write("Here admin could add/remove/edit users (demo placeholder).")
-
-# --- USER PAGES ---
-def user_home():
-    st.title("👤 User Home")
-    st.write("Basic information available for regular users.")
-
-def payments():
-    st.title("💳 Payments")
-    st.write("Here the user can see their payment status (demo placeholder).")
-
-# --- MAIN APP WITH NAVIGATION ---
-def app_pages():
-    username = st.session_state.username
-    role = st.session_state.role
-
-    st.sidebar.success(f"Logged in as {username} ({role})")
-    
-    menu = ["Home", "Admin Dashboard", "Manage Users"] if role == "admin" else ["Home", "Payments"]
-    choice = st.sidebar.radio("Navigation", menu)
-
-    # Logout
+# --- MAIN APP ---
+def main_app():
+    st.sidebar.success(f"Logged in as {st.session_state.username} ({st.session_state.role})")
     if st.sidebar.button("🚪 Logout"):
         st.session_state.logged_in = False
-        st.session_state.username = ""
-        st.session_state.role = ""
-        st.session_state.login_attempted = False
+        st.session_state.username = None
+        st.session_state.role = None
+        st.rerun()
 
-    # Routing
-    if choice == "Home":
-        if role == "user":
-            user_home()
-        else:
-            st.write(f"Welcome back, {username}!")
-    elif choice == "Admin Dashboard":
-        admin_dashboard()
-    elif choice == "Manage Users":
-        manage_users()
-    elif choice == "Payments":
-        payments()
+    st.title("📊 Azure SQL Data Viewer")
+
+    table_name = st.text_input("Enter table name", "Members")
+
+    if st.button("Load Table"):
+        try:
+            df = load_table(table_name)
+            st.dataframe(df, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error loading table: {e}")
+
 
 # --- ROUTER ---
-if st.session_state.logged_in:
-    app_pages()
-else:
+if not st.session_state.logged_in:
     login_page()
+else:
+    main_app()
