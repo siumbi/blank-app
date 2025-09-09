@@ -1,3 +1,4 @@
-streamlit
-pyodbc
 pandas
+pyodbc
+streamlit
+streamlit-aggrid
