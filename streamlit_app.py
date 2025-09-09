@@ -81,12 +81,11 @@ def page_home():
         # --- automatyczne ładowanie po zmianie wyboru ---
         if table_name:
             df = load_table(table_name)
-            # wyświetlanie z AgGrid, wysokość 600, dopasowanie szerokości do kolumn, przewijanie poziome
             gb = GridOptionsBuilder.from_dataframe(df)
-            gb.configure_default_column(sortable=True, filter=True, resizable=True)
-            gb.configure_grid_options(domLayout='normal')  # pozwala na poziomy scroll
+            gb.configure_default_column(minWidth=150, maxWidth=800, sortable=True, filter=True, resizable=True)
+            gb.configure_grid_options(domLayout='normal')  # poziomy scroll
             grid_options = gb.build()
-            AgGrid(df, gridOptions=grid_options, height=400, width = 1000,fit_columns_on_grid_load=False)
+            AgGrid(df, gridOptions=grid_options, height=500, fit_columns_on_grid_load=False)
     except Exception as e:
         st.error(f"Error: {e}")
 
