@@ -76,11 +76,17 @@ def page_home():
 
     try:
         tables = get_table_names()
-        table_name = st.selectbox("Wybierz tabelę", tables)
+        table_name = st.selectbox("Wybierz tabelę", tables, key="table_select")
 
-        if st.button("Load Table"):
+        # --- automatyczne ładowanie po zmianie wyboru ---
+        if table_name:
             df = load_table(table_name)
-            show_table(df)
+            # wyświetlanie z AgGrid, wysokość 600, dopasowanie szerokości do kolumn, przewijanie poziome
+            gb = GridOptionsBuilder.from_dataframe(df)
+            gb.configure_default_column(sortable=True, filter=True, resizable=True)
+            gb.configure_grid_options(domLayout='normal')  # pozwala na poziomy scroll
+            grid_options = gb.build()
+            AgGrid(df, gridOptions=grid_options, height=600, fit_columns_on_grid_load=False)
     except Exception as e:
         st.error(f"Error: {e}")
 
