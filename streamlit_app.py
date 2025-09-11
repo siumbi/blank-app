@@ -36,7 +36,7 @@ def load_table(table_name):
     conn.close()
     return df
 
-# --- LOGIN PAGE ---
+# strona logowania
 def login_page():
     st.title("🔑 Logowanie")
 
@@ -54,8 +54,7 @@ def login_page():
         else:
             st.error("❌ Login lub chasło nie właściwe")
 
-# --- MAIN APP ---
-# --- MAIN APP ---
+# strona glowna
 def main_app():
     st.sidebar.success(f"Zalogowany jako {st.session_state.username} ({st.session_state.role})")
     if st.sidebar.button("🚪 Wyloguj"):
@@ -74,7 +73,7 @@ def main_app():
             with st.spinner("Ładowanie danych..."):
                 df = load_table(table_name)
 
-                # --- FILTROWANIE ---
+                #filtrowanie
                 search = st.text_input("🔍 Wpisz frazę do wyszukania (we wszystkich kolumnach)")
                 if search:
                     df = df[df.apply(lambda row: row.astype(str).str.contains(search, case=False, na=False).any(), axis=1)]
@@ -86,7 +85,6 @@ def main_app():
 
 
 
-# --- ROUTER ---
 if not st.session_state.logged_in:
     login_page()
 else:
