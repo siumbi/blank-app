@@ -55,6 +55,7 @@ def login_page():
             st.error("❌ Login lub chasło nie właściwe")
 
 # --- MAIN APP ---
+# --- MAIN APP ---
 def main_app():
     st.sidebar.success(f"Zalogowany jako {st.session_state.username} ({st.session_state.role})")
     if st.sidebar.button("🚪 Wyloguj"):
@@ -63,7 +64,7 @@ def main_app():
         st.session_state.role = None
         st.experimental_rerun()
 
-    st.title("📊  SQL Data ")
+    st.title("📊 SQL Data")
 
     try:
         tables = get_table_names()
@@ -72,10 +73,17 @@ def main_app():
         if table_name:
             with st.spinner("Ładowanie danych..."):
                 df = load_table(table_name)
+
+                # --- FILTROWANIE ---
+                search = st.text_input("🔍 Wpisz frazę do wyszukania (we wszystkich kolumnach)")
+                if search:
+                    df = df[df.apply(lambda row: row.astype(str).str.contains(search, case=False, na=False).any(), axis=1)]
+
                 st.dataframe(df, use_container_width=True)
 
     except Exception as e:
         st.error(f"Error: {e}")
+
 
 
 # --- ROUTER ---
