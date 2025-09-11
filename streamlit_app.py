@@ -62,9 +62,7 @@ def main_app():
         st.session_state.username = None
         st.session_state.role = None
         st.experimental_rerun()
-
     st.title("📊 SQL Data")
-
     try:
         tables = get_table_names()
         table_name = st.selectbox("Wybierz tabelę", tables)
@@ -72,17 +70,13 @@ def main_app():
         if table_name:
             with st.spinner("Ładowanie danych..."):
                 df = load_table(table_name)
-
                 #filtrowanie
                 search = st.text_input("🔍 Wpisz frazę do wyszukania (we wszystkich kolumnach)")
                 if search:
                     df = df[df.apply(lambda row: row.astype(str).str.contains(search, case=False, na=False).any(), axis=1)]
-
                 st.dataframe(df, use_container_width=True)
-
     except Exception as e:
         st.error(f"Error: {e}")
-
 
 
 if not st.session_state.logged_in:
